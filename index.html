@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rút Quẻ Xăm</title>
+
+<style>
+body {
+  margin: 0;
+  background: #7b0000;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  color: #fff;
+}
+
+h1 {
+  margin: 14px 0 4px;
+  font-size: 22px;
+}
+
+.sub {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+/* Ống gỗ */
+.tube {
+  position: relative;
+  width: 180px;
+  height: 320px;
+  margin: 20px auto;
+  background: linear-gradient(90deg,#e7b76a,#f6d28b,#d89a44);
+  border-radius: 24px;
+  box-shadow:
+    inset 0 0 14px rgba(0,0,0,0.45),
+    0 12px 22px rgba(0,0,0,0.45);
+  overflow: hidden;
+}
+
+/* miệng ống */
+.tube::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 42px;
+  background: linear-gradient(#c8872f,#8d5a18);
+  border-radius: 24px 24px 0 0;
+  z-index: 3;
+}
+
+/* khu vực que */
+.sticks {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 260px;
+}
+
+/* que bên trong – chỉ ló đầu */
+.stick {
+  position: absolute;
+  bottom: -210px;
+  width: 14px;
+  height: 240px;
+  background: linear-gradient(#ffe0a3,#e3a048);
+  border-radius: 5px;
+}
+
+.stick::before {
+  content: attr(data-num);
+  position: absolute;
+  top: -20px;
+  width: 100%;
+  height: 20px;
+  background: #c62828;
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px 4px 0 0;
+}
+
+/* que được rút */
+.pick {
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  width: 26px;
+  height: 300px;
+  background: linear-gradient(#ffe0a3,#e3a048);
+  border-radius: 6px;
+  transform: translateX(-50%);
+  display: none;
+  z-index: 5;
+}
+
+.pick .top {
+  height: 30px;
+  background: #b71c1c;
+  color: #fff;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px 6px 0 0;
+}
+
+button {
+  margin-top: 18px;
+  padding: 14px 34px;
+  font-size: 18px;
+  border: none;
+  border-radius: 30px;
+  background: #ffd54f;
+  color: #000;
+  font-weight: bold;
+}
+
+#result {
+  margin: 18px;
+  font-size: 18px;
+  color: #ffeb3b;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🧧 RÚT QUẺ XĂM</h1>
+<div class="sub">Lắc ống – rút 1 quẻ</div>
+
+<div class="tube" id="tube">
+  <div class="sticks" id="sticks"></div>
+
+  <div class="pick" id="pick">
+    <div class="top" id="num">?</div>
+  </div>
+</div>
+
+<button onclick="rutQue()">RÚT QUẺ</button>
+<div id="result"></div>
+
+<script>
+/* ===== DANH SÁCH TÊN THEO QUẺ ===== */
+const meanings = {
+  1:"VŨ AN AN",
+  2:"HOÀNG NGỌC ANH",
+  3:"NGUYỄN THỊ HÀ ANH",
+  4:"NGUYỄN TRÚC ANH",
+  5:"VŨ THANH BÌNH",
+  6:"ĐÀO QUỲNH CHI",
+  7:"LÊ THỊ QUỲNH DIỄM",
+  8:"NGUYỄN VŨ NGỌC DIỆP",
+  9:"NGÔ THẾ HOÀNG GIANG",
+  10:"TRƯƠNG HOÀNG NGỌC HÀ",
+  11:"TRẦN THU HIỀN",
+  12:"BÀNG TUỆ HIẾU",
+  13:"ĐÀO ĐỨC HIẾU",
+  14:"NGUYỄN VĂN HOÀNG",
+  15:"ĐÀO ĐỨC HUY",
+  16:"DƯƠNG THU HƯƠNG",
+  17:"NGUYỄN THỊ KIM HƯƠNG",
+  18:"NGUYỄN QUANG NAM KHÁNH",
+  19:"VÕ TUẤN KIỆT",
+  20:"VŨ XUÂN LÂM",
+  21:"TRẦN THỊ LIÊN",
+  22:"NGUYỄN NGỌC BẢO LINH",
+  23:"TRẦN NGỌC LINH",
+  24:"NGUYỄN THANH MAI",
+  25:"TRƯƠNG NGUYỄN HẢI NAM",
+  26:"NGUYỄN KIM NGỌC",
+  27:"LÊ THẢO NGUYÊN",
+  28:"NGUYỄN PHƯƠNG NHI",
+  29:"VŨ HOÀNG ĐAN NHI",
+  30:"NGUYỄN MINH PHƯƠNG",
+  31:"PHẠM BÍCH PHƯƠNG",
+  32:"TRẦN NGỌC QUANG",
+  33:"NGUYỄN NGỌC QUYÊN",
+  34:"NGUYỄN THỊ DIỄM QUỲNH",
+  35:"ĐẶNG MINH SƠN",
+  36:"NGUYỄN THANH TÂM",
+  37:"NGUYỄN ĐÌNH TIẾN THÀNH",
+  38:"NGUYỄN HƯƠNG THẢO",
+  39:"TRẦN MINH THƯ",
+  40:"NGUYỄN THỦY TIÊN",
+  41:"HOÀNG MINH TRANG",
+  42:"NGUYỄN MINH TRANG",
+  43:"TRẦN KIỀU TRANG",
+  44:"NGUYỄN LAN TRINH",
+  45:"TRẦN ĐÀM THANH TÙNG",
+  46:"NGUYỄN ANH VŨ",
+  47:"NGUYỄN QUANG VŨ",
+  48:"TRƯƠNG ANH VŨ",
+  49:"NGUYỄN NHƯ Ý",
+  50:"NGUYỄN HẢI YẾN"
+};
+
+const sticksBox = document.getElementById("sticks");
+const pick = document.getElementById("pick");
+const num = document.getElementById("num");
+const result = document.getElementById("result");
+const tube = document.getElementById("tube");
+
+/* quẻ còn lại */
+let remaining = Array.from({length:50},(_,i)=>i+1);
+
+/* tạo ít que hiển thị */
+function createVisibleSticks() {
+  sticksBox.innerHTML = "";
+  for (let i = 0; i < 8; i++) {
+    const s = document.createElement("div");
+    s.className = "stick";
+    s.style.left = (i * 16 + 10) + "px";
+    s.dataset.num = remaining[i] || "";
+    sticksBox.appendChild(s);
+  }
+}
+createVisibleSticks();
+
+function rutQue() {
+  if (remaining.length === 0) {
+    result.innerHTML = "⚠️ Đã rút hết 50 quẻ!";
+    return;
+  }
+
+  const index = Math.floor(Math.random() * remaining.length);
+  const q = remaining[index];
+  remaining.splice(index,1);
+
+  tube.animate([
+    {transform:"rotate(0deg)"},
+    {transform:"rotate(2deg)"},
+    {transform:"rotate(-2deg)"},
+    {transform:"rotate(0deg)"}
+  ],{duration:600});
+
+  pick.style.display = "block";
+  num.textContent = q;
+
+  pick.animate([
+    {transform:"translate(-50%,140px)"},
+    {transform:"translate(-50%,0)"}
+  ],{duration:900,easing:"ease-out"});
+
+  setTimeout(()=>{
+    result.innerHTML =
+      "✨ Quẻ số <b>"+q+"</b><br>" +
+      "👤 <b>"+meanings[q]+"</b><br>" +
+      "📦 Còn lại: "+remaining.length+" quẻ";
+  },900);
+
+  document.querySelectorAll(".stick").forEach((s,i)=>{
+    s.dataset.num = remaining[i] || "";
+  });
+}
+</script>
+
+</body>
+</html>
